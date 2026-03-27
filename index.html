@@ -1,0 +1,368 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>抢票助手 Pro</title>
+  <meta name="theme-color" content="#111827" />
+  <link rel="manifest" href="/manifest.json" />
+  <link rel="apple-touch-icon" href="/icons/icon-192.png" />
+  <style>
+    :root{
+      --bg:#f8fafc; --card:#ffffff; --text:#0f172a; --muted:#64748b; --line:#e2e8f0;
+      --primary:#111827; --soft:#f1f5f9; --danger:#dc2626;
+    }
+    *{box-sizing:border-box}
+    body{margin:0;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,"PingFang SC","Hiragino Sans GB","Microsoft YaHei",sans-serif;background:linear-gradient(180deg,#f8fafc,#eef2ff 60%,#f8fafc);color:var(--text)}
+    .wrap{max-width:1080px;margin:0 auto;padding:20px}
+    .grid{display:grid;gap:16px}
+    .hero{grid-template-columns:1.25fr .75fr}
+    .main{grid-template-columns:.95fr 1.05fr}
+    @media (max-width:900px){.hero,.main{grid-template-columns:1fr}}
+    .card{background:var(--card);border-radius:24px;box-shadow:0 10px 25px rgba(15,23,42,.06);padding:20px;border:1px solid rgba(226,232,240,.65)}
+    h1{margin:10px 0 8px;font-size:36px;line-height:1.1}
+    h2{margin:0 0 12px;font-size:22px}
+    .pill{display:inline-flex;gap:8px;align-items:center;padding:6px 12px;background:var(--soft);border-radius:999px;color:#334155;font-size:14px}
+    .muted{color:var(--muted)}
+    .timebox{background:#111827;color:#fff;border-radius:24px;padding:16px;text-align:right}
+    .row{display:flex;gap:12px;flex-wrap:wrap}
+    .btn{appearance:none;border:0;background:var(--primary);color:#fff;padding:12px 16px;border-radius:16px;font-size:15px;cursor:pointer}
+    .btn.outline{background:#fff;color:var(--text);border:1px solid var(--line)}
+    .btn.danger{background:#fff;color:var(--danger);border:1px solid #fecaca}
+    .btn:disabled{opacity:.55;cursor:not-allowed}
+    input{width:100%;padding:12px 14px;border:1px solid var(--line);border-radius:16px;font-size:15px;outline:none;background:#fff}
+    label{display:block;margin-bottom:8px;font-size:14px;color:#334155}
+    .field{margin-bottom:14px}
+    .badge{display:inline-block;padding:5px 10px;border-radius:999px;background:var(--soft);font-size:13px}
+    .badge.red{background:#fee2e2;color:#991b1b}
+    .hint{padding:14px;border:1px dashed var(--line);border-radius:18px;background:#fff}
+    .nextbox{background:#111827;color:#fff;border-radius:24px;padding:20px}
+    .nextsub{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-top:16px}
+    @media (max-width:700px){.nextsub{grid-template-columns:1fr}}
+    .mini{background:rgba(255,255,255,.1);padding:14px;border-radius:18px}
+    .list{display:flex;flex-direction:column;gap:12px}
+    .item{padding:16px;border:1px solid var(--line);border-radius:18px;background:#fff}
+    .itemhead{display:flex;justify-content:space-between;gap:12px;align-items:flex-start;flex-wrap:wrap}
+    .toolbar{display:flex;gap:10px;flex-wrap:wrap}
+    .templates{display:flex;gap:8px;flex-wrap:wrap}
+    .small{font-size:13px}
+    .install{display:flex;justify-content:space-between;gap:12px;align-items:flex-start}
+    @media (max-width:700px){.install{flex-direction:column}}
+    .empty{padding:28px;text-align:center;background:#f8fafc;border-radius:18px;color:#64748b}
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <input id="fileInput" type="file" accept="application/json" hidden />
+    <div class="grid hero">
+      <div class="card">
+        <div class="pill">🎫 手机抢票助手 Pro</div>
+        <h1>像 App 一样用的抢票助手</h1>
+        <p class="muted">管理多个演唱会开票时间，自动倒计时、系统通知、一键直达购票页。适合 iPhone 用 Safari 添加到主屏幕。</p>
+      </div>
+      <div class="timebox">
+        <div class="small" style="opacity:.8">当前时间</div>
+        <div id="nowText" style="font-size:20px;font-weight:600;margin-top:6px"></div>
+      </div>
+    </div>
+
+    <div id="installCard" class="card" style="margin-top:16px">
+      <div class="install">
+        <div>
+          <div style="font-weight:700">安装到 iPhone 主屏幕</div>
+          <div class="muted small" style="margin-top:6px">请用 Safari 打开本页面，点“分享”→“添加到主屏幕”。安装后会像独立 App 一样打开。</div>
+        </div>
+        <button class="btn outline" onclick="hideInstallCard()">知道了</button>
+      </div>
+    </div>
+
+    <div class="grid main" style="margin-top:16px">
+      <div class="card">
+        <h2>添加抢票项目</h2>
+
+        <div class="field">
+          <label>快捷模板</label>
+          <div class="templates">
+            <button class="btn outline" onclick="applyPreset('周杰伦演唱会','待填写场次','https://www.maoyan.com/')">周杰伦演唱会</button>
+            <button class="btn outline" onclick="applyPreset('演唱会抢票','待填写城市','https://www.maoyan.com/')">演唱会抢票</button>
+            <button class="btn outline" onclick="applyPreset('体育赛事门票','待填写比赛','https://www.maoyan.com/')">体育赛事门票</button>
+          </div>
+        </div>
+
+        <div class="field">
+          <label>演唱会名称</label>
+          <input id="name" placeholder="例如：周杰伦 2026 东京场" />
+        </div>
+        <div class="field">
+          <label>城市 / 场次</label>
+          <input id="city" placeholder="例如：东京 · 周六场" />
+        </div>
+        <div class="field">
+          <label>开票时间</label>
+          <input id="time" type="datetime-local" />
+        </div>
+        <div class="field">
+          <label>购票链接</label>
+          <input id="url" placeholder="https://..." />
+        </div>
+
+        <div class="row">
+          <button class="btn" onclick="addEvent()">保存并开始提醒</button>
+          <button class="btn outline" id="exportBtn" onclick="exportEvents()">导出项目</button>
+        </div>
+        <div class="row" style="margin-top:10px">
+          <button class="btn outline" onclick="document.getElementById('fileInput').click()">导入项目</button>
+          <button class="btn outline" onclick="requestPermission()">开启通知</button>
+          <button class="btn outline" onclick="sendTestNotification()">测试提醒</button>
+        </div>
+
+        <div class="hint" style="margin-top:16px">
+          <div style="font-weight:600">通知状态：<span id="permText">检测中</span></div>
+          <div class="muted small" style="margin-top:6px">支持 30 秒提醒、5 秒提醒、开票提醒。iOS 需使用 Safari 并允许通知。</div>
+        </div>
+      </div>
+
+      <div class="grid">
+        <div class="card">
+          <h2>最近一场</h2>
+          <div id="nextContainer"></div>
+        </div>
+
+        <div class="card">
+          <div class="itemhead" style="margin-bottom:12px">
+            <h2 style="margin:0">项目列表</h2>
+            <input id="query" placeholder="搜索名称、城市或链接" style="max-width:320px" oninput="render()" />
+          </div>
+          <div id="list" class="list"></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+<script>
+const STORAGE_KEY = 'ticket-helper-events-v1';
+let events = [];
+let now = Date.now();
+
+function loadEvents(){
+  try {
+    events = JSON.parse(localStorage.getItem(STORAGE_KEY) || '[]');
+  } catch(e) {
+    events = [];
+    localStorage.removeItem(STORAGE_KEY);
+  }
+}
+function saveEvents(){
+  localStorage.setItem(STORAGE_KEY, JSON.stringify(events));
+}
+function pad(n){ return String(n).padStart(2,'0'); }
+function formatDate(ts){
+  const d = new Date(ts);
+  return `${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())} ${pad(d.getHours())}:${pad(d.getMinutes())}:${pad(d.getSeconds())}`;
+}
+function formatCountdown(ms){
+  if (ms <= 0) return '已开票';
+  const s = Math.floor(ms/1000);
+  const days = Math.floor(s/86400);
+  const hours = Math.floor((s%86400)/3600);
+  const mins = Math.floor((s%3600)/60);
+  const secs = s%60;
+  if (days>0) return `${days}天 ${hours}小时 ${mins}分`;
+  if (hours>0) return `${hours}小时 ${mins}分 ${secs}秒`;
+  return `${mins}分 ${secs}秒`;
+}
+function isValidUrl(url){
+  try { new URL(url); return true; } catch { return false; }
+}
+function uuid(){
+  return (crypto && crypto.randomUUID) ? crypto.randomUUID() : `${Date.now()}-${Math.random().toString(36).slice(2)}`;
+}
+function applyPreset(name, city, url){
+  document.getElementById('name').value = name;
+  document.getElementById('city').value = city;
+  document.getElementById('url').value = url;
+}
+function hideInstallCard(){
+  document.getElementById('installCard').style.display = 'none';
+}
+function requestPermission(){
+  if (!('Notification' in window)) {
+    alert('当前设备不支持通知');
+    return;
+  }
+  Notification.requestPermission().then(updatePermissionText);
+}
+function updatePermissionText(){
+  let text = 'unsupported';
+  if ('Notification' in window) text = Notification.permission;
+  document.getElementById('permText').textContent = text;
+}
+function sendTestNotification(){
+  if (!('Notification' in window) || Notification.permission !== 'granted') {
+    alert('请先开启通知权限');
+    return;
+  }
+  const n = new Notification('🎫 抢票助手测试提醒', { body: '通知已正常工作，开票前会提醒你。' });
+  n.onclick = () => window.focus();
+}
+function addEvent(){
+  const name = document.getElementById('name').value.trim();
+  const city = document.getElementById('city').value.trim();
+  const time = document.getElementById('time').value;
+  const url = document.getElementById('url').value.trim();
+
+  if (!name) return alert('请填写演唱会名称');
+  if (!time) return alert('请选择开票时间');
+  if (!url || !isValidUrl(url)) return alert('请填写正确的购票链接');
+
+  events.push({ id: uuid(), name, city, time, url });
+  saveEvents();
+  document.getElementById('name').value = '';
+  document.getElementById('city').value = '';
+  document.getElementById('time').value = '';
+  document.getElementById('url').value = '';
+  render();
+}
+function removeEvent(id){
+  events = events.filter(e => e.id !== id);
+  saveEvents();
+  render();
+}
+function exportEvents(){
+  const blob = new Blob([JSON.stringify(events, null, 2)], { type: 'application/json' });
+  const objectUrl = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = objectUrl;
+  a.download = 'ticket-helper-events.json';
+  a.click();
+  URL.revokeObjectURL(objectUrl);
+}
+async function importEvents(file){
+  if (!file) return;
+  try {
+    const text = await file.text();
+    const parsed = JSON.parse(text);
+    if (!Array.isArray(parsed)) throw new Error('bad format');
+    events = parsed;
+    saveEvents();
+    render();
+  } catch {
+    alert('导入失败，请选择正确的 JSON 文件');
+  }
+}
+function renderNext(){
+  const next = events
+    .filter(e => new Date(e.time).getTime() > now)
+    .sort((a,b) => new Date(a.time)-new Date(b.time))[0];
+  const box = document.getElementById('nextContainer');
+  if (!next){
+    box.innerHTML = '<div class="empty">还没有添加项目，先新增一个演唱会。</div>';
+    return;
+  }
+  const target = new Date(next.time).getTime();
+  box.innerHTML = `
+    <div class="nextbox">
+      <div style="font-size:28px;font-weight:700">${escapeHtml(next.name)}</div>
+      <div style="margin-top:6px;color:#cbd5e1">${escapeHtml(next.city || '未填写场次')}</div>
+      <div style="margin-top:4px;font-size:13px;color:#94a3b8">${formatDate(target)}</div>
+      <div class="nextsub">
+        <div class="mini">
+          <div class="small" style="opacity:.85">倒计时</div>
+          <div style="font-size:28px;font-weight:700;margin-top:8px">${formatCountdown(target - now)}</div>
+        </div>
+        <div class="mini">
+          <div class="small" style="opacity:.85">提醒机制</div>
+          <div style="margin-top:8px;line-height:1.7">30秒提醒、5秒提醒、开票提醒，并支持一键跳转购票链接。</div>
+        </div>
+      </div>
+      <div style="margin-top:16px">
+        <button class="btn outline" onclick="window.open('${next.url}','_blank','noopener,noreferrer')">进入购票页</button>
+      </div>
+    </div>
+  `;
+}
+function renderList(){
+  const list = document.getElementById('list');
+  const q = document.getElementById('query').value.trim().toLowerCase();
+  const filtered = [...events]
+    .sort((a,b)=>new Date(a.time)-new Date(b.time))
+    .filter(e => [e.name, e.city || '', e.url].join(' ').toLowerCase().includes(q));
+
+  document.getElementById('exportBtn').disabled = filtered.length === 0 && events.length === 0;
+
+  if (!filtered.length){
+    list.innerHTML = '<div class="empty">暂无匹配项目</div>';
+    return;
+  }
+
+  list.innerHTML = filtered.map(e => {
+    const target = new Date(e.time).getTime();
+    const started = target <= now;
+    return `
+      <div class="item">
+        <div class="itemhead">
+          <div>
+            <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">
+              <div style="font-size:18px;font-weight:700">${escapeHtml(e.name)}</div>
+              <span class="badge ${started ? 'red' : ''}">${started ? '已开票' : '待开票'}</span>
+            </div>
+            <div class="muted small" style="margin-top:6px">${escapeHtml(e.city || '未填写场次')}</div>
+            <div class="muted small" style="margin-top:4px">${formatDate(target)}</div>
+            <div style="margin-top:8px">倒计时：${formatCountdown(target - now)}</div>
+          </div>
+          <div class="toolbar">
+            <button class="btn outline" onclick="window.open('${e.url}','_blank','noopener,noreferrer')">打开</button>
+            <button class="btn danger" onclick="removeEvent('${e.id}')">删除</button>
+          </div>
+        </div>
+      </div>
+    `;
+  }).join('');
+}
+function render(){
+  document.getElementById('nowText').textContent = formatDate(now);
+  renderNext();
+  renderList();
+}
+function escapeHtml(str){
+  return String(str).replace(/[&<>"']/g, s => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[s]));
+}
+function runNotifications(){
+  events.forEach(event => {
+    const target = new Date(event.time).getTime();
+    const diff = target - now;
+    [30000, 5000, 0].forEach(mark => {
+      const key = `notify:${event.id}:${mark}`;
+      if (sessionStorage.getItem(key) === '1') return;
+      const shouldFire = mark === 0 ? (diff <= 0 && diff > -1000) : (diff <= mark && diff > mark - 1000);
+      if (!shouldFire) return;
+
+      const title = mark === 30000 ? `⏰ ${event.name} 30秒后开票` : mark === 5000 ? `🚨 ${event.name} 5秒准备` : `🎯 ${event.name} 已开票`;
+      const body = mark === 0 ? '点击进入购票页面' : (event.city ? `${event.city} · 请提前进入页面` : '请提前进入购票页面');
+
+      if ('Notification' in window && Notification.permission === 'granted') {
+        const n = new Notification(title, { body });
+        n.onclick = () => window.open(event.url, '_blank', 'noopener,noreferrer');
+      }
+      sessionStorage.setItem(key, '1');
+    });
+  });
+}
+document.getElementById('fileInput').addEventListener('change', e => importEvents(e.target.files && e.target.files[0]));
+loadEvents();
+updatePermissionText();
+render();
+setInterval(() => {
+  now = Date.now();
+  runNotifications();
+  render();
+}, 1000);
+
+if ('serviceWorker' in navigator) {
+  window.addEventListener('load', () => {
+    navigator.serviceWorker.register('/service-worker.js').catch(() => {});
+  });
+}
+</script>
+</body>
+</html>
